@@ -30,6 +30,7 @@ git clone https://github.com/neodesk-informatica/Script-Docker.git
 
 ### 2. Tornando o Script Executável
 ```bash
+cd Script-Docker
 chmod +x install-docker.sh
 ```
 
