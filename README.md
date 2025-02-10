@@ -19,6 +19,7 @@ O script realiza as seguintes tarefas automaticamente:
 ## Como Usar
 
 ### 1. Clonando o Repositório
+apt update -y && apt install git -y
 
 Clone este repositório para o seu servidor Ubuntu:
 
