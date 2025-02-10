@@ -1,5 +1,5 @@
 #------------------------------------------------
-#  INSTALACAO DO GLPI NA ULTIMA VERSAO ESTAVEL NO UBUNTU 24.04
+#  INSTALACAO DO DOCKER & DOCKER COMPOSER
 #------------------------------------------------
 
 echo "#------------------------------------------#"
