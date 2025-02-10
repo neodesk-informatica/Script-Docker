@@ -28,8 +28,7 @@ apt update && apt install git -y && git clone https://github.com/neodesk-informa
 
 ### 2. Tornando o Script Executável
 ```bash
-cd Script-Docker
-chmod +x install-docker.sh
+cd Script-Docker && chmod +x install-docker.sh
 ```
 
 ### 3. Executando o Script
@@ -40,6 +39,8 @@ sudo ./install-docker.sh
 ### 4. Verificando a Instalação
 ```bash
 docker --version
+```
+```bash
 docker-compose --version
 ```
 
