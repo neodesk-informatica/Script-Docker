@@ -26,16 +26,25 @@ Clone este repositório para o seu servidor Ubuntu:
 apt update -y && apt install git -y
 
 git clone https://github.com/neodesk-informatica/Script-Docker.git
+```
 
 ### 2. Tornando o Script Executável
+```bash
 chmod +x install-docker.sh
+```
 
 ### 3. Executando o Script
+```bash
 sudo ./install-docker.sh
+```
 
 ### 4. Verificando a Instalação
+```bash
 docker --version
 docker-compose --version
+```
 
 ### 5. Testando o Docker
+```bash
 docker run hello-world
+```
