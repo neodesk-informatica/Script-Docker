@@ -25,8 +25,7 @@ Clone este repositório para o seu servidor Ubuntu:
 ```bash
 apt update -y && apt install git -y
 
-git clone https://github.com/SEU_USUARIO/nome-do-repositorio.git
-cd nome-do-repositorio
+git clone https://github.com/neodesk-informatica/Script-Docker.git
 
 ### 2. Tornando o Script Executável
 chmod +x install-docker.sh
