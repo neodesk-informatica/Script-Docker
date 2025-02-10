@@ -23,9 +23,7 @@ O script realiza as seguintes tarefas automaticamente:
 Clone este repositório para o seu servidor Ubuntu:
 
 ```bash
-apt update -y && apt install git -y
-
-git clone https://github.com/neodesk-informatica/Script-Docker.git
+apt update && apt install git -y && git clone https://github.com/neodesk-informatica/Script-Docker.git
 ```
 
 ### 2. Tornando o Script Executável
