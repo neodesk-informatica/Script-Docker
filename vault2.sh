@@ -2,72 +2,71 @@
 
 # Atualiza o sistema
 echo "Atualizando o sistema..."
-sudo apt update && sudo apt upgrade -y
+sudo apt-get update && sudo apt-get upgrade -y
 
-# Instalar dependências necessárias
+# Instalar dependências
 echo "Instalando dependências..."
-sudo apt install -y docker docker-compose curl
+sudo apt-get install -y curl gnupg2 lsb-release apt-transport-https
 
-# Baixar a imagem do Vaultwarden (antes chamada Bitwarden_RS)
-echo "Baixando e iniciando o Vaultwarden..."
-mkdir -p ~/vaultwarden
-cd ~/vaultwarden
+# Baixar o pacote Vaultwarden
+echo "Baixando o Vaultwarden..."
+curl -fsSL https://github.com/dani-garcia/vaultwarden/releases/download/v1.25.0/vaultwarden-server-v1.25.0-linux-x86_64.tar.gz -o vaultwarden.tar.gz
 
-# Criar o arquivo docker-compose.yml para o Vaultwarden
-cat <<EOF > docker-compose.yml
-version: '3'
-services:
-  vaultwarden:
-    image: vaultwarden/server:latest
-    container_name: vaultwarden
-    restart: unless-stopped
-    environment:
-      WEBSOCKET_ENABLED: "true"
-      ADMIN_TOKEN: "YOUR_ADMIN_TOKEN"  # Token do admin a ser gerado
-      SMTP_HOST: "smtp.titan.email"    # SMTP Titan
-      SMTP_PORT: "587"
-      SMTP_FROM: "youremail@titan.email"
-      SMTP_USERNAME: "youremail@titan.email"
-      SMTP_PASSWORD: "YOUR_TITAN_EMAIL_PASSWORD"
-      SMTP_TLS: "true"
-    volumes:
-      - ./vw-data:/data
-    ports:
-      - 80:80
-      - 443:443
-    networks:
-      - vaultwarden-net
-networks:
-  vaultwarden-net:
-    driver: bridge
-EOF
+# Extrair o pacote
+echo "Extraindo o pacote..."
+tar -xzvf vaultwarden.tar.gz
 
-# Subir o Vaultwarden com Docker Compose
-echo "Subindo o Vaultwarden com Docker Compose..."
-sudo docker-compose up -d
+# Mover os arquivos extraídos
+echo "Movendo arquivos para o diretório adequado..."
+sudo mv vaultwarden-server-v1.25.0-linux-x86_64 /opt/vaultwarden
 
-# Criar token de administração
-echo "Gerando o token de administração..."
-ADMIN_TOKEN=$(openssl rand -base64 32)
-sed -i "s/YOUR_ADMIN_TOKEN/$ADMIN_TOKEN/" ~/vaultwarden/docker-compose.yml
+# Configuração do systemd para iniciar o Vaultwarden como serviço
+echo "Configurando o Vaultwarden como serviço..."
+echo "[Unit]
+Description=Vaultwarden
+After=network.target
 
-# Subir novamente após alterar o token de administração
-echo "Subindo novamente o Vaultwarden após atualizar o token de admin..."
-sudo docker-compose down
-sudo docker-compose up -d
+[Service]
+ExecStart=/opt/vaultwarden/vaultwarden
+WorkingDirectory=/opt/vaultwarden
+User=nobody
+Group=nogroup
+Environment=DATABASE_URL=/opt/vaultwarden/db.sqlite3
+Environment=ROCKET_PORT=80
+Restart=always
 
-# Configurar o primeiro usuário admin via CLI
-echo "Configurando o primeiro usuário admin..."
-curl -X POST "http://localhost/api/admin" \
+[Install]
+WantedBy=multi-user.target" | sudo tee /etc/systemd/system/vaultwarden.service
+
+# Habilitar o serviço para iniciar automaticamente
+echo "Habilitando o serviço Vaultwarden..."
+sudo systemctl enable vaultwarden
+
+# Iniciar o serviço
+echo "Iniciando o serviço Vaultwarden..."
+sudo systemctl start vaultwarden
+
+# Verificar se o serviço está rodando
+echo "Verificando o status do serviço..."
+sudo systemctl status vaultwarden
+
+# Configurar o token de administrador
+echo "Configurando o token de administrador..."
+sudo bash -c "echo -n 'admin_token' > /opt/vaultwarden/admin-token.txt"
+
+# Configurar o email da Titan (supondo que você tenha as credenciais corretas)
+# Aqui você pode definir as variáveis de configuração do Vaultwarden
+echo "Configurando email da Titan..."
+sudo bash -c "echo -e 'SMTP_HOST=smtp.titan.email\nSMTP_PORT=587\nSMTP_USER=seu-email@titan.email\nSMTP_PASSWORD=sua-senha\nSMTP_FROM=seu-email@titan.email' > /opt/vaultwarden/.env"
+
+# Criação de um usuário administrador
+echo "Criando usuário administrador..."
+curl -X POST "http://localhost:80/api/accounts" \
   -H "Content-Type: application/json" \
   -d '{
         "email": "admin@titan.email",
-        "password": "YOUR_ADMIN_PASSWORD",
-        "token": "'$ADMIN_TOKEN'"
+        "password": "adminsenha",
+        "is_admin": true
       }'
 
-echo "Vaultwarden configurado com sucesso!"
-
-# Instrução de Acesso
-echo "Acesse o Vaultwarden em http://<seu-ip-servidor>"
-echo "Token de admin: $ADMIN_TOKEN"
+echo "Vaultwarden instalado e configurado com sucesso!"
