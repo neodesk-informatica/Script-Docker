@@ -1,72 +1,68 @@
 #!/bin/bash
 
-# Atualiza o sistema
+# Atualizando o sistema
 echo "Atualizando o sistema..."
-sudo apt-get update && sudo apt-get upgrade -y
+sudo apt update -y && sudo apt upgrade -y
 
-# Instalar dependências
+# Instalando dependências
 echo "Instalando dependências..."
-sudo apt-get install -y curl gnupg2 lsb-release apt-transport-https
+sudo apt install -y curl sudo lsb-release apt-transport-https ca-certificates
 
-# Baixar o pacote Vaultwarden
-echo "Baixando o Vaultwarden..."
-curl -fsSL https://github.com/dani-garcia/vaultwarden/releases/download/v1.25.0/vaultwarden-server-v1.25.0-linux-x86_64.tar.gz -o vaultwarden.tar.gz
+# Instalando o Docker
+echo "Instalando o Docker..."
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
 
-# Extrair o pacote
-echo "Extraindo o pacote..."
-tar -xzvf vaultwarden.tar.gz
+# Instalando o Docker Compose
+echo "Instalando o Docker Compose..."
+sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
 
-# Mover os arquivos extraídos
-echo "Movendo arquivos para o diretório adequado..."
-sudo mv vaultwarden-server-v1.25.0-linux-x86_64 /opt/vaultwarden
+# Baixando e rodando o Vaultwarden com Docker
+echo "Baixando o Vaultwarden com Docker..."
+mkdir -p ~/vaultwarden
+cd ~/vaultwarden
 
-# Configuração do systemd para iniciar o Vaultwarden como serviço
-echo "Configurando o Vaultwarden como serviço..."
-echo "[Unit]
-Description=Vaultwarden
-After=network.target
+cat > docker-compose.yml <<EOL
+version: "3"
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: unless-stopped
+    volumes:
+      - ./vw-data:/data
+    ports:
+      - 80:80
+    environment:
+      - ADMIN_TOKEN=admin.Vaultwarden-NeoDesk100  # Substitua por um token seguro
+EOL
 
-[Service]
-ExecStart=/opt/vaultwarden/vaultwarden
-WorkingDirectory=/opt/vaultwarden
-User=nobody
-Group=nogroup
-Environment=DATABASE_URL=/opt/vaultwarden/db.sqlite3
-Environment=ROCKET_PORT=80
-Restart=always
+# Rodando o container
+echo "Rodando o Vaultwarden..."
+sudo docker-compose up -d
 
-[Install]
-WantedBy=multi-user.target" | sudo tee /etc/systemd/system/vaultwarden.service
-
-# Habilitar o serviço para iniciar automaticamente
-echo "Habilitando o serviço Vaultwarden..."
-sudo systemctl enable vaultwarden
-
-# Iniciar o serviço
-echo "Iniciando o serviço Vaultwarden..."
-sudo systemctl start vaultwarden
-
-# Verificar se o serviço está rodando
-echo "Verificando o status do serviço..."
-sudo systemctl status vaultwarden
-
-# Configurar o token de administrador
-echo "Configurando o token de administrador..."
-sudo bash -c "echo -n 'admin_token' > /opt/vaultwarden/admin-token.txt"
-
-# Configurar o email da Titan (supondo que você tenha as credenciais corretas)
-# Aqui você pode definir as variáveis de configuração do Vaultwarden
-echo "Configurando email da Titan..."
-sudo bash -c "echo -e 'SMTP_HOST=smtp.titan.email\nSMTP_PORT=587\nSMTP_USER=seu-email@titan.email\nSMTP_PASSWORD=sua-senha\nSMTP_FROM=seu-email@titan.email' > /opt/vaultwarden/.env"
-
-# Criação de um usuário administrador
+# Criando o usuário administrador via API
 echo "Criando usuário administrador..."
-curl -X POST "http://localhost:80/api/accounts" \
-  -H "Content-Type: application/json" \
-  -d '{
-        "email": "admin@titan.email",
-        "password": "adminsenha",
-        "is_admin": true
-      }'
 
-echo "Vaultwarden instalado e configurado com sucesso!"
+# Informações do novo usuário admin
+USER_EMAIL="ian.maralhas@neodeskinformatica.com.br"
+USER_PASSWORD="admin.Vaultwarden-NeoDesk100"
+
+# URL do Vaultwarden (ajuste conforme necessário)
+VAULTWARDEN_URL="https://vaultwarden.neodeskserver.com.br"
+
+# Acessando a API para criar o usuário administrador
+curl -X POST "$VAULTWARDEN_URL/api/accounts" \
+  -H "Content-Type: application/json" \
+  -d "{
+        \"email\": \"$USER_EMAIL\",
+        \"password\": \"$USER_PASSWORD\",
+        \"is_admin\": true
+      }"
+
+# Instruções finais
+echo "Vaultwarden instalado e rodando com sucesso!"
+echo "Para acessar a interface administrativa, use a URL: http://<IP_do_servidor>/admin"
+echo "O token de administrador é: admin.Vaultwarden-NeoDesk100"
+echo "Se desejar configurar mais opções, edite o arquivo 'docker-compose.yml'"
