@@ -24,18 +24,24 @@ mkdir -p ~/vaultwarden
 cd ~/vaultwarden
 
 cat > docker-compose.yml <<EOL
-version: "3"
+version: '3'
 services:
   vaultwarden:
     image: vaultwarden/server:latest
     container_name: vaultwarden
-    restart: unless-stopped
-    volumes:
-      - ./vw-data:/data
+    restart: always
     ports:
-      - 80:80
+      - "80:80"
+      - "3012:3012"
+    volumes:
+      - ./data:/data
     environment:
-      - ADMIN_TOKEN=admin.Vaultwarden-NeoDesk100  # Substitua por um token seguro
+      - DOMAIN=https://vaultwarden.neodeskserver.com.br
+      - SIGNUPS_ALLOWED=false
+      - ADMIN_TOKEN=$(openssl rand -hex 32)
+      - ADMIN_EMAIL=admin@neodeskinformatica.com.br
+      - ADMIN_PASSWORD=M@ralhas95
+
 EOL
 
 # Rodando o container
